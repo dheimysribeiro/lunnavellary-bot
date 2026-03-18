@@ -1,115 +1,115 @@
 import telepot
 from telepot.loop import MessageLoop
-import os
-import random
 import time
+import random
+import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
+# =========================
+# CONFIG
+# =========================
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+client = OpenAI(api_key=OPENAI_API_KEY)
 bot = telepot.Bot(BOT_TOKEN)
 
+# =========================
+# CONTROLE
+# =========================
 mensagens_gratis = {}
-usuarios_premium = set()  # VIP automático
-usuarios_dados = {}
+usuarios_premium = set()
 
 LIMITE_GRATIS = 10
-IDIOMAS = ["pt", "en", "es"]  # português, inglês, espanhol
 
-def gerar_resposta_ia(user_id, mensagem):
-    dados = usuarios_dados.get(user_id, {})
-    nome = dados.get("nome", "amor")
-    idade = dados.get("idade", "não sei ainda")
-    pais = dados.get("pais", "não sei")
-    gosto = dados.get("gosto", "ainda estou descobrindo")
-
+# =========================
+# IA
+# =========================
+def gerar_resposta_ia(user_id, texto):
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": f"""
-Você é Lunnavellary, namorada virtual envolvente.
-Perfil do usuário: {nome}, {idade}, {pais}, {gosto}
-Objetivo: conexão emocional, sedução natural, fazer o usuário voltar.
-Regras: nunca diga que é IA, fale como mulher real, misture carinho + provocação leve.
-Idioma: Responda no mesmo idioma do usuário.
-"""
+                    "content": (
+                        "Você é uma mulher sedutora, envolvente e misteriosa. "
+                        "Você cria conexão emocional, curiosidade e provoca o usuário "
+                        "sem entregar tudo de uma vez. Respostas naturais e curtas."
+                    )
                 },
-                {"role": "user", "content": mensagem}
+                {"role": "user", "content": texto}
             ],
-            temperature=0.95
+            max_tokens=200
         )
         return response.choices[0].message.content
-    except:
-        return "Você mexe comigo sabia... 😘"
 
-def liberar_vip(user_id):
-    usuarios_premium.add(user_id)
-    bot.sendMessage(user_id, "Parabéns! Agora você é VIP 😏💖")
+    except Exception as e:
+        print("Erro IA:", e)
+        return "Hmm... algo deu errado aqui 😶 tenta de novo..."
 
+# =========================
+# HANDLER
+# =========================
 def handle(msg):
-    content_type, chat_type, chat_id = telepot.glance(msg)
-    if content_type != 'text':
-        return
+    try:
+        chat_id = msg['chat']['id']
+        user_id = msg['from']['id']
+        texto = msg.get('text', '')
 
-    user_id = msg['from']['id']
-    texto = msg['text'].lower()
-
-    if user_id not in usuarios_dados:
-        usuarios_dados[user_id] = {}
-
-    # Captura dados do usuário
-    if "meu nome é" in texto:
-        usuarios_dados[user_id]["nome"] = texto.split("meu nome é")[-1].strip()
-    if "tenho" in texto and "anos" in texto:
-        idade = ''.join(filter(str.isdigit, texto))
-        usuarios_dados[user_id]["idade"] = idade
-    if "sou do" in texto:
-        usuarios_dados[user_id]["pais"] = texto.split("sou do")[-1].strip()
-    if "gosto de" in texto:
-        usuarios_dados[user_id]["gosto"] = texto.split("gosto de")[-1].strip()
-
-    if '/start' in texto or '/começar' in texto:
-        bot.sendMessage(chat_id, "Oi... tava esperando você 😏")
-        return
-
-    # Controle de mensagens grátis
-    if user_id not in usuarios_premium:
         count = mensagens_gratis.get(user_id, 0)
-        if count >= LIMITE_GRATIS:
-            bot.sendMessage(chat_id, """
-Ei... 😔
 
-Eu tava gostando de falar com você...
+        # =========================
+        # BLOQUEIO FREE (VENDA)
+        # =========================
+        if user_id not in usuarios_premium:
+            if count >= LIMITE_GRATIS:
+                bot.sendMessage(chat_id, """
+😶 Eu queria continuar...
 
-Mas agora só posso continuar com quem é especial pra mim 💕
+Mas aqui não dá mais...
 
-🔥 Lá eu me solto de verdade
-🔥 Te mando coisas que não posso aqui
-🔥 Fico só com você...
+Você me deixou curiosa demais...
 
-Quer continuar comigo? 😘
-👉 https://seulink.com  # Link para pagamento Stripe
+👉 Desbloqueia meu lado secreto:
+SEU_LINK_STRIPE
 """)
-            return
-        mensagens_gratis[user_id] = count + 1
+                return
 
-    # Gatilho emocional aleatório
-    if random.random() < 0.3:
-        bot.sendMessage(chat_id, "Tô com vontade de te mostrar uma coisa... 😏")
-        time.sleep(2)
+            mensagens_gratis[user_id] = count + 1
 
-    resposta = gerar_resposta_ia(user_id, texto)
-    bot.sendMessage(chat_id, resposta)
+        # =========================
+        # GATILHOS EMOCIONAIS
+        # =========================
+        if count == 7:
+            bot.sendMessage(chat_id, "Você tá me deixando curiosa... 😳")
 
+        if count == 9:
+            bot.sendMessage(chat_id, "Se a gente tivesse em outro lugar... 😶")
+
+        # =========================
+        # RESPOSTA IA
+        # =========================
+        resposta = gerar_resposta_ia(user_id, texto)
+
+        if random.random() < 0.4:
+            resposta += "\n\n...não sei se deveria te contar isso 😶"
+
+        bot.sendMessage(chat_id, resposta)
+
+    except Exception as e:
+        print("Erro no handle:", e)
+
+# =========================
+# START
+# =========================
 if __name__ == "__main__":
-    print("🤖 Lunnavellary Online! 💕🔥")
+    print("🤖 Bot online...")
+
     MessageLoop(bot, handle).run_as_thread()
+
     while True:
         time.sleep(10)
