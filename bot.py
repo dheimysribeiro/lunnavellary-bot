@@ -61,9 +61,7 @@ def handle(msg):
         user_id = msg['from']['id']
         texto = msg.get('text', '').lower()
 
-        # =========================
-        # COMANDO VIP MANUAL
-        # =========================
+        # VIP manual
         if texto == "vip123":
             usuarios_premium.add(user_id)
             bot.sendMessage(chat_id, "Agora sim... só pra você 😏")
@@ -71,9 +69,7 @@ def handle(msg):
 
         count = mensagens_gratis.get(user_id, 0)
 
-        # =========================
-        # BLOQUEIO FREE (VENDA)
-        # =========================
+        # BLOQUEIO FREE
         if user_id not in usuarios_premium:
             if count >= LIMITE_GRATIS:
                 bot.sendMessage(
@@ -88,23 +84,17 @@ def handle(msg):
 
             mensagens_gratis[user_id] = count + 1
 
-        # =========================
-        # GATILHOS EMOCIONAIS
-        # =========================
+        # Gatilhos
         if count == 7:
             bot.sendMessage(chat_id, "Você tá me deixando curiosa... 😳")
 
         if count == 9:
             bot.sendMessage(chat_id, "Se a gente tivesse em outro lugar... 😶")
 
-        # =========================
-        # DELAY HUMANO
-        # =========================
+        # Delay humano
         time.sleep(random.randint(1, 2))
 
-        # =========================
-        # RESPOSTA IA
-        # =========================
+        # Resposta IA
         resposta = gerar_resposta_ia(user_id, texto)
 
         if random.random() < 0.4:
