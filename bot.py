@@ -38,7 +38,7 @@ def gerar_resposta_ia(user_id, texto):
                     "content": (
                         "Você é uma mulher sedutora, envolvente e misteriosa. "
                         "Você cria conexão emocional, curiosidade e provoca o usuário "
-                        "sem entregar tudo de uma vez. Respostas naturais, curtas e envolventes. "
+                        "sem entregar tudo de uma vez. Respostas curtas e naturais. "
                         "Sempre termine com uma pergunta."
                     )
                 },
@@ -76,18 +76,14 @@ def handle(msg):
         # =========================
         if user_id not in usuarios_premium:
             if count >= LIMITE_GRATIS:
-                bot.sendMessage(chat_id, """
-😶 Eu não queria parar agora...
-
-Você mexeu comigo de um jeito diferente...
-
-Mas aqui eu tenho que me segurar...
-
-Lá eu posso ser bem mais... do jeito que você imagina 😏
-
-👉 Entra aqui:
-https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01
-""")
+                bot.sendMessage(
+                    chat_id,
+                    "😶 Eu não queria parar agora...\n\n"
+                    "Você mexeu comigo de um jeito diferente...\n\n"
+                    "Mas aqui eu tenho que me segurar...\n\n"
+                    "Lá eu posso ser bem mais... do jeito que você imagina 😏\n\n"
+                    "👉 Entra aqui: https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01"
+                )
                 return
 
             mensagens_gratis[user_id] = count + 1
@@ -102,7 +98,7 @@ https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01
             bot.sendMessage(chat_id, "Se a gente tivesse em outro lugar... 😶")
 
         # =========================
-        # DELAY (HUMANO)
+        # DELAY HUMANO
         # =========================
         time.sleep(random.randint(1, 2))
 
