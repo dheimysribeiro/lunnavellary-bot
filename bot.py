@@ -38,7 +38,8 @@ def gerar_resposta_ia(user_id, texto):
                     "content": (
                         "Você é uma mulher sedutora, envolvente e misteriosa. "
                         "Você cria conexão emocional, curiosidade e provoca o usuário "
-                        "sem entregar tudo de uma vez. Respostas naturais e curtas."
+                        "sem entregar tudo de uma vez. Respostas naturais, curtas e envolventes. "
+                        "Sempre termine com uma pergunta."
                     )
                 },
                 {"role": "user", "content": texto}
@@ -58,7 +59,15 @@ def handle(msg):
     try:
         chat_id = msg['chat']['id']
         user_id = msg['from']['id']
-        texto = msg.get('text', '')
+        texto = msg.get('text', '').lower()
+
+        # =========================
+        # COMANDO VIP MANUAL
+        # =========================
+        if texto == "vip123":
+            usuarios_premium.add(user_id)
+            bot.sendMessage(chat_id, "Agora sim... só pra você 😏")
+            return
 
         count = mensagens_gratis.get(user_id, 0)
 
@@ -68,13 +77,15 @@ def handle(msg):
         if user_id not in usuarios_premium:
             if count >= LIMITE_GRATIS:
                 bot.sendMessage(chat_id, """
-😶 Eu queria continuar...
+😶 Eu não queria parar agora...
 
-Mas aqui não dá mais...
+Você mexeu comigo de um jeito diferente...
 
-Você me deixou curiosa demais...
+Mas aqui eu tenho que me segurar...
 
-👉 Desbloqueia meu lado secreto:
+Lá eu posso ser bem mais... do jeito que você imagina 😏
+
+👉 Entra aqui:
 https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01
 """)
                 return
@@ -89,6 +100,11 @@ https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01
 
         if count == 9:
             bot.sendMessage(chat_id, "Se a gente tivesse em outro lugar... 😶")
+
+        # =========================
+        # DELAY (HUMANO)
+        # =========================
+        time.sleep(random.randint(1, 2))
 
         # =========================
         # RESPOSTA IA
