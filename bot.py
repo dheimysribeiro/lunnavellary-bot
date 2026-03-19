@@ -75,7 +75,7 @@ Mas aqui não dá mais...
 Você me deixou curiosa demais...
 
 👉 Desbloqueia meu lado secreto:
-SEU_LINK_STRIPE
+https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01
 """)
                 return
 
