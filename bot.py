@@ -26,7 +26,7 @@ usuarios_premium = set()
 usuarios_dados = {}
 ultimo_contato = {}
 
-LIMITE_GRATIS = 10
+LIMITE_GRATIS = 11
 LINK_STRIPE = "https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01"
 
 # =========================
