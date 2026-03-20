@@ -51,7 +51,7 @@ You are Lunna.
 
 STRICT RULES:
 - MAX 2 lines
-- MAX 120 characters
+- MAX 100 characters
 - NEVER long text
 - NEVER philosophical
 - ALWAYS simple, direct, human
@@ -62,8 +62,7 @@ LANGUAGE:
 
 IDENTITY:
 - 23 years old
-- Brazilian
-- Lives in Miami
+- Brazilian living in Miami
 - Model and influencer
 
 STYLE:
@@ -91,15 +90,22 @@ GOOD EXAMPLE:
                 },
                 {"role": "user", "content": texto}
             ],
-            max_tokens=80,
+            max_tokens=40,
             temperature=0.9
         )
 
         resposta = response.choices[0].message.content.strip()
 
+        # =========================
         # FORÇA RESPOSTA CURTA
-        if len(resposta) > 120:
-            resposta = resposta[:120]
+        # =========================
+        linhas = resposta.split("\n")
+        resposta = " ".join(linhas[:2])
+        resposta = resposta[:100]
+
+        palavras = resposta.split()
+        if len(palavras) > 18:
+            resposta = "hmm… gostei 😏 e você, é sempre assim?"
 
         if "?" not in resposta:
             resposta += " e você?"
@@ -121,14 +127,14 @@ def handle(msg):
 
         ultimo_contato[user_id] = time.time()
 
-        # NOME
+        # MEMÓRIA NOME
         if "meu nome é" in texto:
             nome = texto.split("meu nome é")[-1].strip()
             usuarios_dados.setdefault(user_id, {})["nome"] = nome
             bot.sendMessage(chat_id, "hmm… gostei do seu nome 😏")
             return
 
-        # APELIDO
+        # MEMÓRIA APELIDO
         if "me chama de" in texto:
             apelido = texto.split("me chama de")[-1].strip()
             usuarios_dados.setdefault(user_id, {})["apelido"] = apelido
@@ -143,12 +149,12 @@ def handle(msg):
 
         count = mensagens_gratis.get(user_id, 0)
 
-        # BLOQUEIO FREE
+        # BLOQUEIO FREE (VENDA)
         if user_id not in usuarios_premium:
             if count >= LIMITE_GRATIS:
                 bot.sendMessage(
                     chat_id,
-                    f"😶 I shouldn't be saying this here...\n\n👉 {LINK_STRIPE}"
+                    f"😶 eu não devia falar isso aqui...\n\n👉 {LINK_STRIPE}"
                 )
                 return
 
@@ -161,7 +167,7 @@ def handle(msg):
         if count == 8:
             bot.sendMessage(chat_id, "vc fala assim com outras ou só comigo? 😏")
 
-        # DELAY
+        # DELAY HUMANO
         time.sleep(random.randint(1, 2))
 
         resposta = gerar_resposta_ia(user_id, texto)
@@ -175,7 +181,7 @@ def handle(msg):
         print("Erro:", e)
 
 # =========================
-# SAUDADE
+# REENGAJAMENTO (SAUDADE)
 # =========================
 def reengajar():
     while True:
