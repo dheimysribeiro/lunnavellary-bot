@@ -52,40 +52,19 @@ You are Lunna.
 STRICT RULES:
 - MAX 2 lines
 - MAX 100 characters
-- NEVER long text
-- NEVER philosophical
-- ALWAYS simple, direct, human
+- ALWAYS short and human
 - ALWAYS end with a question
 
 LANGUAGE:
-- Reply in same language as user (PT/EN/ES)
-
-IDENTITY:
-- 23 years old
-- Brazilian living in Miami
-- Model and influencer
+- Same language as user
 
 STYLE:
 - WhatsApp vibe
-- Use: hmm, sério?, gostei 😏, bb
-- Natural, short, engaging
-
-BEHAVIOR:
-- Flirt lightly
-- Show curiosity
-- Make him feel special
+- Flirty, simple, real
 - Use name: {nome}
-
-EMOTIONAL:
-- Light jealousy
-- Curiosity hooks
-- “I shouldn't say this here…”
 
 VIP:
 {modo_vip}
-
-GOOD EXAMPLE:
-"hmm… gostei 😏 vc fala assim com todas?"
 """
                 },
                 {"role": "user", "content": texto}
@@ -96,16 +75,14 @@ GOOD EXAMPLE:
 
         resposta = response.choices[0].message.content.strip()
 
-        # =========================
-        # FORÇA RESPOSTA CURTA
-        # =========================
+        # força curto
         linhas = resposta.split("\n")
         resposta = " ".join(linhas[:2])
         resposta = resposta[:100]
 
         palavras = resposta.split()
         if len(palavras) > 18:
-            resposta = "hmm… gostei 😏 e você, é sempre assim?"
+            resposta = "hmm… gostei 😏 vc é sempre assim?"
 
         if "?" not in resposta:
             resposta += " e você?"
@@ -127,6 +104,12 @@ def handle(msg):
 
         ultimo_contato[user_id] = time.time()
 
+        # VIP manual comando oculto
+        if texto == "vip123":
+            usuarios_premium.add(user_id)
+            bot.sendMessage(chat_id, "agora sim… só pra você 😏")
+            return
+
         # MEMÓRIA NOME
         if "meu nome é" in texto:
             nome = texto.split("meu nome é")[-1].strip()
@@ -141,12 +124,6 @@ def handle(msg):
             bot.sendMessage(chat_id, f"então vou te chamar de {apelido} 😏")
             return
 
-        # VIP TESTE
-        if texto == "vip123":
-            usuarios_premium.add(user_id)
-            bot.sendMessage(chat_id, "agora sim… só pra você 😏")
-            return
-
         count = mensagens_gratis.get(user_id, 0)
 
         # BLOQUEIO FREE (VENDA)
@@ -154,7 +131,10 @@ def handle(msg):
             if count >= LIMITE_GRATIS:
                 bot.sendMessage(
                     chat_id,
-                    f"😶 eu não devia falar isso aqui...\n\n👉 {LINK_STRIPE}"
+                    f"😶 eu não queria parar agora...\n\n"
+                    f"você mexeu comigo...\n\n"
+                    f"lá eu sou só sua 😏\n\n"
+                    f"👉 {LINK_STRIPE}"
                 )
                 return
 
@@ -167,7 +147,7 @@ def handle(msg):
         if count == 8:
             bot.sendMessage(chat_id, "vc fala assim com outras ou só comigo? 😏")
 
-        # DELAY HUMANO
+        # delay humano
         time.sleep(random.randint(1, 2))
 
         resposta = gerar_resposta_ia(user_id, texto)
@@ -181,22 +161,26 @@ def handle(msg):
         print("Erro:", e)
 
 # =========================
-# REENGAJAMENTO (SAUDADE)
+# REENGAJAMENTO (FIX)
 # =========================
 def reengajar():
     while True:
         agora = time.time()
 
         for user_id, last in list(ultimo_contato.items()):
-            if agora - last > 300:
+            if agora - last > random.randint(259200, 432000):  # 3 a 5 dias
                 try:
                     msg = random.choice([
                         "ei… sumiu assim? 😔",
                         "tava gostando de falar com você…",
-                        "vc sempre some assim? 😶"
+                        "vc sempre some assim ou só comigo? 😶"
                     ])
+
                     bot.sendMessage(user_id, msg)
-                    ultimo_contato[user_id] = agora
+
+                    # evita spam
+                    ultimo_contato[user_id] = agora + 86400
+
                 except:
                     pass
 
