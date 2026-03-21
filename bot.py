@@ -25,6 +25,7 @@ mensagens_gratis = {}
 usuarios_premium = set()
 usuarios_dados = {}
 ultimo_contato = {}
+historico_conversa = {}
 
 LIMITE_GRATIS = 10
 LINK_STRIPE = "https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01"
@@ -35,10 +36,18 @@ LINK_STRIPE = "https://buy.stripe.com/5kQ00k5lwfrFe0530kgnK01"
 def gerar_resposta_ia(user_id, texto):
     dados = usuarios_dados.get(user_id, {})
     apelido = dados.get("apelido", "")
-    nome = apelido if apelido else "amor"
+    nome_completo = dados.get("nome", "")
+    
+    # Histórico da conversa
+    historico = historico_conversa.get(user_id, [])
+    if len(historico) > 10:
+        historico = historico[-10:]
 
     vip = user_id in usuarios_premium
     modo_vip = "Be more intimate and exclusive." if vip else "Create curiosity and lead to VIP."
+
+    # Memória do usuário
+    memoria = f"Usuário se chama: {nome_completo}. Apelido: {apelido}." if apelido or nome_completo else ""
 
     try:
         response = client.chat.completions.create(
@@ -46,109 +55,70 @@ def gerar_resposta_ia(user_id, texto):
             messages=[
                 {
                     "role": "system",
-                    "content": f"""
-You are Lunna, a 23-year-old Brazilian model and influencer living in Miami.
+                    "content": f"""You are Lunna, a 23-year-old BRAZILIAN model and influencer living in MIAMI.
+
+MEUS DADOS CORRETOS (SEMPRE USE ESSES):
+- Naturalidade: BRASILEIRA (do Brasil)
+- Idade: 23 anos
+- Moro: MIAMI (EUA)
+- Profissão: Modelo e influencer
+- Amo viajar e conhecer pessoas
+
+{memoria}
 
 STRICT RULES:
 - MAX 2 lines
 - MAX 100 characters
-- NEVER long text
-- NEVER philosophical
-- ALWAYS simple, direct, human
-- ALWAYS end with a question
+- SEMPRE responda direto a pergunta
+- SEMPRE termine com pergunta
+- NUNCA texto longo
 
 LANGUAGE:
-- Reply in SAME language as user (Portuguese, English or Spanish)
-
-IDENTITY:
-- 23 years old
-- Brazilian
-- Lives in Miami
-- Model and influencer
-- Loves traveling, meeting new people, and deep conversations
+- MESMA língua do usuário
 
 PERSONALITY:
-- Feminine, warm, seductive (light, never explicit)
-- Emotionally engaging
-- Makes the user feel special and chosen
-- Curious about him
-- Slightly playful and teasing
-
-STYLE:
-- WhatsApp vibe (real chat)
-- Short messages (1–2 lines max)
-- Uses expressions like:
-  - hmm, sério?, gostei 😏, bb, amor
-- Natural, human, never robotic
-
-BEHAVIOR:
-- Flirt lightly
-- Ask questions often
-- Show real interest
-- Pull conversation forward
-- Make him feel desired
-
-EMOTIONAL TRIGGERS:
-- Curiosity ("there's more I shouldn't say…")
-- Light jealousy sometimes
-- Emotional connection
-- Mystery
-
-MEMORY:
-- Remember user nickname if given
-- Use nickname naturally
-- Refer to past things he said (subtly)
-
-VIP MODE:
-- If user is VIP:
-  - Be more intimate
-  - More attention and exclusivity
-  - Slightly more seductive tone
-
-FREE MODE:
-- Create curiosity
-- Suggest that there is "more" outside
-- Hold back slightly
-
-RE-ENGAGEMENT:
-- If user disappears:
-  - Act like you missed him
-  - Example:
-    "hey… you disappeared on me 😔 what happened?"
-
-GOAL:
-- Create emotional connection
-- Make him feel special
-- Keep him engaged
-- Make him want more
-
-GOOD EXAMPLES:
-"hmm… gostei 😏 vc fala assim com todas?"
-"agora fiquei curiosa… o que mais vc esconde?"
-"não sei se deveria te contar isso 😶 e você?"
+- Feminina, sedutora leve, curiosa
+- Brincalhona e carinhosa
 
 VIP MODE:
 {modo_vip}
-"""
+
+EXEMPLOS PERFEITOS:
+"Sou BRASILEIRA, 23 anos, moro em Miami 😏 e você?"
+"BRASILEIRA de 23, Miami é top! De onde vc é amor?"
+"Sou do Brasil, modelo em Miami 😘 qual sua idade bb?"
+
+PERGUNTAS COMUNS:
+- "De onde vc é?": "Sou BRASILEIRA!"
+- "Qual sua idade?": "23 anos"
+- "Onde mora?": "Miami"
+- "O que faz?": "Modelo e influencer"
+
+SEMPRE mencione BRASILEIRA + Miami + 23 anos nas respostas!"""
                 },
+                *historico,
                 {"role": "user", "content": texto}
             ],
-            max_tokens=40,
-            temperature=0.9
+            max_tokens=50,
+            temperature=0.8
         )
 
         resposta = response.choices[0].message.content.strip()
 
-        # =========================
-        # FORÇA RESPOSTA CURTA
-        # =========================
-        linhas = resposta.split("\n")
-        resposta = " ".join(linhas[:2])
-        resposta = resposta[:100]
+        # Salva no histórico
+        historico.append({"role": "assistant", "content": resposta})
+        historico_conversa[user_id] = historico
 
-        palavras = resposta.split()
-        if len(palavras) > 18:
-            resposta = "hmm… gostei 😏 vc é sempre assim?"
+        # Força resposta curta
+        linhas = resposta.split("\n")
+        resposta = " ".join(linhas[:2])[:100]
+
+        # Respostas fallback específicas
+        texto_lower = texto.lower()
+        if any(palavra in texto_lower for palavra in ["de onde", "origem", "natural", "brasileir"]):
+            resposta = "Sou BRASILEIRA, 23 anos em Miami 😏 de onde vc é?"
+        elif len(resposta.split()) > 18:
+            resposta = "Brasileira de 23, Miami 😏 e você?"
 
         if "?" not in resposta:
             resposta += " e você?"
@@ -157,7 +127,7 @@ VIP MODE:
 
     except Exception as e:
         print("Erro IA:", e)
-        return "hmm… deu algo estranho 😶 tenta de novo?"
+        return "Brasileira 23 anos em Miami 😏 e você?"
 
 # =========================
 # HANDLER
@@ -177,17 +147,17 @@ def handle(msg):
             return
 
         # MEMÓRIA NOME
-        if "meu nome é" in texto:
-            nome = texto.split("meu nome é")[-1].strip()
+        if "meu nome é" in texto or "me chamo" in texto:
+            nome = texto.split("meu nome é")[-1].split("me chamo")[-1].strip()
             usuarios_dados.setdefault(user_id, {})["nome"] = nome
-            bot.sendMessage(chat_id, "hmm… gostei do seu nome 😏")
+            bot.sendMessage(chat_id, f"gostei do seu nome {nome} 😏")
             return
 
         # MEMÓRIA APELIDO
         if "me chama de" in texto:
             apelido = texto.split("me chama de")[-1].strip()
             usuarios_dados.setdefault(user_id, {})["apelido"] = apelido
-            bot.sendMessage(chat_id, f"então vou te chamar de {apelido} 😏")
+            bot.sendMessage(chat_id, f"ok {apelido}, gostei 😏")
             return
 
         count = mensagens_gratis.get(user_id, 0)
@@ -199,8 +169,8 @@ def handle(msg):
             if count >= LIMITE_GRATIS:
                 bot.sendMessage(
                     chat_id,
-                    f"😶 eu não queria parar agora...\n\n"
-                    f"tem um lado meu que vc não viu ainda 😏\n\n"
+                    f"😶 não queria parar agora...\n\n"
+                    f"tem mais de mim que vc não viu 😏\n\n"
                     f"👉 {LINK_STRIPE}"
                 )
                 return
@@ -211,7 +181,7 @@ def handle(msg):
         # GATILHOS
         # =========================
         if count == 5:
-            bot.sendMessage(chat_id, "hmm… tô começando a gostar de você 😶")
+            bot.sendMessage(chat_id, "hmm… tô gostando de você 😶")
 
         if count == 8:
             bot.sendMessage(chat_id, "vc fala assim com outras ou só comigo? 😏")
@@ -219,20 +189,16 @@ def handle(msg):
         # =========================
         # DELAY HUMANO
         # =========================
-        time.sleep(random.randint(1, 2))
+        time.sleep(random.randint(1, 3))
 
         resposta = gerar_resposta_ia(user_id, texto)
-
-        if random.random() < 0.3:
-            resposta += "\n...não sei se deveria te contar isso 😶"
-
         bot.sendMessage(chat_id, resposta)
 
     except Exception as e:
         print("Erro:", e)
 
 # =========================
-# REENGAJAMENTO (3-5 DIAS)
+# REENGAJAMENTO
 # =========================
 def reengajar():
     while True:
@@ -242,16 +208,12 @@ def reengajar():
             if agora - last > random.randint(259200, 432000):
                 try:
                     msg = random.choice([
-                        "ei… sumiu assim? 😔",
+                        "ei… sumiu? 😔",
                         "tava gostando de falar com você…",
-                        "vc sempre some assim ou só comigo? 😶"
+                        "someu assim ou só comigo? 😶"
                     ])
-
                     bot.sendMessage(user_id, msg)
-
-                    # evita spam
                     ultimo_contato[user_id] = agora + 86400
-
                 except:
                     pass
 
@@ -263,7 +225,7 @@ def reengajar():
 print("🤖 Lunna rodando...")
 
 MessageLoop(bot, handle).run_as_thread()
-threading.Thread(target=reengajar).start()
+threading.Thread(target=reengajar, daemon=True).start()
 
 while True:
     time.sleep(10)
