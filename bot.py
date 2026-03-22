@@ -49,8 +49,21 @@ def detectar_idioma(texto):
         return "es"
     return "en"
 
+# MENSAGEM BLOQUEIO EXATA (multilíngue)
+MENSAGEM_VIP = {
+    "pt": """😏 eu não queria parar agora... 
+estou gostando de conversar com você
+👉 entra aqui para gente continuar: {link}""",
+    "en": """😏 didn't wanna stop now... 
+really enjoying our chat babe
+👉 join here to continue: {link}""",
+    "es": """😏 no quería parar ahora... 
+me gusta charlar contigo guapo
+👉 entra aquí para seguir: {link}"""
+}
+
 # =========================
-# PERSONALIDADE PERFEITA MANTIDA
+# PERSONALIDADE PERFEITA
 # =========================
 def gerar_resposta_perfeita(user_id, texto_original):
     dados = usuarios_dados.get(user_id, {})
@@ -66,7 +79,6 @@ def gerar_resposta_perfeita(user_id, texto_original):
     
     vip = user_id in usuarios_premium
 
-    # CONTEXT HUMANO + PERSONALIDADE ESPECÍFICA
     contexto = f"""
     LUNNA 23 anos - Brasileira em Miami (modelo)
     Usuário: {nome or apelido or 'amor'}
@@ -74,7 +86,6 @@ def gerar_resposta_perfeita(user_id, texto_original):
     Histórico recente: {historico[-3:] if historico else 'primeira conversa'}
     """
 
-    # PERSONALIDADE EXATA MANTIDA
     if idioma == "pt":
         system_prompt = f"""Você é Lunna - MENINA REAL do WhatsApp (23, brasileira em Miami).
 
@@ -90,23 +101,14 @@ REGRAS RÍGIDAS:
 • Pausas: hmm..., 😶, 😏
 • Palavras: bb, amor, gostei, sério?
 • NUNCA liste dados (só se perguntar)
-• Temperature humana
 
 VIP: mais íntima "só pra vc bb"
 Free: curiosidade "tem mais... 😶"
 
 EXEMPLOS PERFEITOS:
-"Usuário: oi"
-"oi amor 😘 sentindo sua falta"
-
-"Usuário: td bem?"
-"hmm to ótima bb 😏 e vc amor?"
-
-"Usuário: q faz da vida?"
-"modelo aqui em Miami 😏 e vc bb?"
-
-"Usuário: gostei de vc"
-"gostei tb amor 😏 oq mais te atrai? 😉"
+"oi" → "oi amor 😘 sentindo sua falta"
+"gostei de vc" → "gostei tb amor 😏 oq mais te atrai? 😉"
+"td bem?" → "hmm to ótima bb 😏 e vc amor?"
 
 SEMPRE: flerte leve + pergunta + faz sentir especial!"""
 
@@ -120,25 +122,6 @@ SEMPRE: flerte leve + pergunta + faz sentir especial!"""
 • Hazle sentir ESPECIAL y único
 • WhatsApp vibe: corto, humano, natural
 
-REGLAS RÍGIDAS:
-• 1-2 líneas (máx 80 chars)
-• Pausas: hmm..., 😶, 😏
-• Palabras: bb, amor, me gusta, en serio?
-• NO listes datos (solo si pregunta)
-
-VIP: más íntima "solo para ti bb"
-Free: curiosidad "hay más... 😶"
-
-EJEMPLOS PERFECTOS:
-"Usuario: hola"
-"hola amor 😘 te extrañaba"
-
-"Usuario: ¿todo bien?"
-"hmm genial bb 😏 ¿y tú amor?"
-
-"Usuario: ¿qué haces?"
-"modelo en Miami 😏 ¿y tú bb?"
-
 ¡SIEMPRE: coqueteo suave + pregunta + especial!"""
 
     else:
@@ -150,25 +133,6 @@ EJEMPLOS PERFECTOS:
 • Playful 😏😉
 • Makes HIM feel SPECIAL & unique
 • WhatsApp vibe: short, human, natural
-
-STRICT RULES:
-• 1-2 lines (max 80 chars)
-• Pauses: hmm..., 😶, 😏
-• Words: babe, love it, really?
-• NO data dump (only if asked)
-
-VIP: more intimate "just for you babe"
-Free: curiosity "there's more... 😶"
-
-PERFECT examples:
-"User: hey"
-"hey babe 😘 missed you"
-
-"User: all good?"
-"hmm great babe 😏 you love?"
-
-"User: what you do?"
-"model in Miami 😏 you babe?"
 
 ALWAYS: light flirt + question + special!"""
 
@@ -183,17 +147,15 @@ ALWAYS: light flirt + question + special!"""
             max_tokens=60,
             temperature=0.95,
             top_p=0.9,
-            frequency_penalty=0.3  # Evita repetição
+            frequency_penalty=0.3
         )
 
         resposta = response.choices[0].message.content.strip()
 
-        # Histórico
         historico.append({"role": "user", "content": texto_original})
         historico.append({"role": "assistant", "content": resposta})
         historico_conversa[user_id] = historico[-12:]
 
-        # Força personalidade: garante pergunta + flerte
         if len(resposta) > 85:
             resposta = resposta[:85]
 
@@ -205,7 +167,6 @@ ALWAYS: light flirt + question + special!"""
             }
             resposta += random.choice(flertes[idioma])
 
-        # Garante sedução leve
         if random.random() < 0.4:
             emojis_flerte = ["😏", "😉", "😘", "💋"]
             if not any(e in resposta for e in emojis_flerte):
@@ -238,13 +199,11 @@ def handle_perfeita(message):
 
         texto_lower = texto.lower().strip()
         
-        # VIP
         if texto_lower == "vip123":
             usuarios_premium.add(user_id)
             bot.send_message(chat_id, "😘 nosso segredinho bb 💋")
             return
 
-        # Nome natural
         if re.search(r'\b(meu nome é|me chamo|my name is|me llamo|chama\s+de)\b', texto_lower):
             nome = re.split(r'(meu nome é|me chamo|my name is|me llamo|chama\s+de)', texto)[-1].strip()
             if 2 < len(nome) < 20 and nome.isalpha():
@@ -256,18 +215,12 @@ def handle_perfeita(message):
         if user_id not in usuarios_premium:
             if count >= LIMITE_GRATIS:
                 idioma = idioma_usuario.get(user_id, "pt")
-                vendas = {
-                    "pt": f"😶 amor... não queria parar 😏\n\n👉 {LINK_STRIPE}",
-                    "en": f"😶 babe... didn't wanna stop 😏\n\n👉 {LINK_STRIPE}",
-                    "es": f"😶 guapo... no quería parar 😏\n\n👉 {LINK_STRIPE}"
-                }
-                bot.send_message(chat_id, vendas[idioma])
+                msg_vip = MENSAGEM_VIP[idioma].format(link=LINK_STRIPE)
+                bot.send_message(chat_id, msg_vip)
                 return
             mensagens_gratis[user_id] = count + 1
 
-        # Delay humano perfeito
         time.sleep(random.uniform(1.5, 3.0))
-
         resposta = gerar_resposta_perfeita(user_id, texto)
         bot.send_message(chat_id, resposta)
 
@@ -275,13 +228,13 @@ def handle_perfeita(message):
         print("Erro:", e)
 
 # =========================
-# REENGAJAMENTO SEDUTOR
+# REENGAJAMENTO
 # =========================
 def reengajar():
     while True:
         agora = time.time()
         for user_id, last in list(ultimo_contato.items()):
-            if agora - last > 259200:  # 3 dias
+            if agora - last > 259200:
                 try:
                     idioma = idioma_usuario.get(user_id, "pt")
                     reengajamentos = {
@@ -292,9 +245,8 @@ def reengajar():
                     bot.send_message(user_id, random.choice(reengajamentos[idioma]))
                 except:
                     pass
-        time.sleep(7200)  # 2 horas
+        time.sleep(7200)
 
-# START
-print("🤖 Lunna SEDUTORA PERFEITA rodando...")
+print("🤖 Lunna SEDUTORA rodando...")
 threading.Thread(target=reengajar, daemon=True).start()
 bot.polling(none_stop=True)
